@@ -2,11 +2,8 @@ target/
 .idea/
 *.iml
 .env
-src/main/resources/application.properties
-.idea
-.mvn
 .gitattributes
 HELP.md
-mvnw.cmd
 mvnw
-.env
+mvnw.cmd
+.mvn
