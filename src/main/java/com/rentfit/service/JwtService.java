@@ -38,4 +38,34 @@ public class JwtService {
                 .signWith(secretKey)
                 .compact();
     }
+
+    public String extractEmail(String token) {
+        return Jwts.parser()
+                .verifyWith(secretKey)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload()
+                .getSubject();
+    }
+
+    public boolean isTokenValid(String token, String email) {
+        try {
+            String tokenEmail = extractEmail(token);
+
+            Date expiration = Jwts.parser()
+                    .verifyWith(secretKey)
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload()
+                    .getExpiration();
+
+            return email.equals(tokenEmail)
+                    && expiration != null
+                    && expiration.after(new Date());
+
+        } catch (Exception exception) {
+            return false;
+        }
+    }
+
 }
