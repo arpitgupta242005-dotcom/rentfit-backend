@@ -1,12 +1,15 @@
 
 package com.rentfit.entity;
-import com.rentfit.enums.UserStatus;
-import jakarta.persistence.*;
-import lombok.*;
-import com.rentfit.enums.Role;
-import org.hibernate.annotations.CreationTimestamp;
 
-import java.time.LocalDateTime;
+import com.rentfit.enums.Role;
+import jakarta.persistence.*;
+
+import lombok.Getter;
+import lombok.Setter;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+
+import java.time.LocalDate;
 
 @Entity
 @Table(name = "users")
@@ -26,8 +29,7 @@ public class User {
     @Column(nullable = false, unique = true)
     private String email;
 
-
-    @Column(nullable = false)
+    @Column(name = "password", nullable = false)
     private String passwordHash;
 
     private String phone;
@@ -36,20 +38,16 @@ public class User {
     @Column(nullable = false)
     private Role role = Role.USER;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private UserStatus status = UserStatus.ACTIVE;
+    @Column(name = "license_number")
+    private String licenseNumber;
 
-    private boolean isVerified = false;
+    @Column(name = "vehicle_model")
+    private String vehicleModel;
 
-    private String businessName;
+    @Column(name = "vehicle_number")
+    private String vehicleNumber;
 
-    private String profileImageUrl;
+    private LocalDate dob;
 
-    private LocalDateTime lastSeenAt;
-
-    @CreationTimestamp
-    @Column(updatable = false)
-    private LocalDateTime createdAt;
-
+    private String gender;
 }
