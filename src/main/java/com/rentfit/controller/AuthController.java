@@ -42,7 +42,9 @@ public class AuthController {
     @PostMapping("/send-otp")
     public ResponseEntity<Map<String, String>> sendOtp(
             @Valid @RequestBody SendOtpRequest request) {
+
         otpService.sendOtp(request.getEmail());
+
         return ResponseEntity.ok(
                 Map.of("message", "OTP sent successfully"));
     }
@@ -50,6 +52,7 @@ public class AuthController {
     @PostMapping("/verify-otp")
     public ResponseEntity<Map<String, String>> verifyOtp(
             @Valid @RequestBody VerifyOtpRequest request) {
+
         boolean verified = otpService.verifyOtp(
                 request.getEmail(), request.getOtp());
 
@@ -74,19 +77,25 @@ public class AuthController {
                     .body(Map.of(
                             "message", "Email is already registered"));
         }
-
         if (!otpService.consumeVerifiedEmail(email)) {
-            return ResponseEntity.badRequest().body(Map.of(
-                    "message",
-                    "Please verify your email using OTP first"));
+            return ResponseEntity.badRequest().body(
+                    Map.of(
+                            "message",
+                            "Please verify your email using OTP first"));
         }
 
         User user = new User();
         user.setName(request.getName().trim());
         user.setEmail(email);
-        user.setPasswordHash(
-                passwordEncoder.encode(request.getPassword()));
+
+        String encodedPassword =
+                passwordEncoder.encode(request.getPassword());
+
+        user.setPasswordHash(encodedPassword);
+        user.setPassword(encodedPassword);
         user.setRole(Role.USER);
+        user.setStatus("ACTIVE");
+        user.setVerified(false);
 
         userRepository.save(user);
 
@@ -103,9 +112,12 @@ public class AuthController {
 
         User user = userRepository.findByEmail(email).orElse(null);
 
-        if (user == null || user.getPasswordHash() == null
+        if (user == null
+                || user.getPasswordHash() == null
                 || !passwordEncoder.matches(
-                request.getPassword(), user.getPasswordHash())) {
+                request.getPassword(),
+                user.getPasswordHash())) {
+
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of(
                             "message", "Invalid email or password"));

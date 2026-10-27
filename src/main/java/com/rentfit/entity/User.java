@@ -1,6 +1,7 @@
 
 package com.rentfit.entity;
 
+import java.time.LocalDateTime;
 import com.rentfit.enums.Role;
 import jakarta.persistence.*;
 
@@ -29,14 +30,23 @@ public class User {
     @Column(nullable = false, unique = true)
     private String email;
 
-    @Column(name = "password", nullable = false)
+    @Column(name = "password_hash", nullable = false)
     private String passwordHash;
+
+    @Column(name = "password", nullable = false)
+    private String password;
 
     private String phone;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role = Role.USER;
+
+    @Column(name = "status", nullable = false)
+    private String status = "ACTIVE";
+
+    @Column(name = "is_verified", nullable = false)
+    private boolean isVerified = false;
 
     @Column(name = "license_number")
     private String licenseNumber;
@@ -50,4 +60,14 @@ public class User {
     private LocalDate dob;
 
     private String gender;
+
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @PrePersist
+    protected void onCreate() {
+        if (createdAt == null) {
+            createdAt = LocalDateTime.now();
+        }
+    }
 }
