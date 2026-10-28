@@ -18,8 +18,8 @@ public class JwtService {
 
 
     public JwtService(
-            @Value("${rentfit.jwt.secret}") String secret,
-            @Value("${rentfit.jwt.expiration-ms}") long expirationMs) {
+            @Value("${app.rentfit.jwt.secret}") String secret,
+            @Value("${app.rentfit.jwt.expiration}") long expirationMs) {
 
         this.secretKey = Keys.hmacShaKeyFor(
                 secret.getBytes(StandardCharsets.UTF_8)
