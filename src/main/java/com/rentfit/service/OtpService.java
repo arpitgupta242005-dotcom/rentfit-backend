@@ -31,15 +31,16 @@ public class OtpService {
     }
 
     public void sendOtp(String email) {
+        String emailKey = normalizeEmail(email);
 
         // A new OTP requires fresh verification.
-        verifiedEmails.remove(email);
+        verifiedEmails.remove(emailKey);
 
         String otp = String.format(
                 "%06d", secureRandom.nextInt(1_000_000)
         );
 
-        otpStore.put(email, new OtpData(
+        otpStore.put(emailKey, new OtpData(
                 otp, System.currentTimeMillis() + OTP_EXPIRY_MS
         ));
 
@@ -54,7 +55,7 @@ public class OtpService {
         try {
             mailSender.send(message);
         } catch (RuntimeException ex) {
-            otpStore.remove(email);
+            otpStore.remove(emailKey);
             throw new IllegalStateException(
                     "Unable to send OTP email", ex
             );
