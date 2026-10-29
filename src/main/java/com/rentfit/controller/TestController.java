@@ -10,19 +10,18 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
 
-@RequestMapping("api/")
+@RequestMapping("/api/v1")
 @RestController
 public class TestController {
 
-
-    @GetMapping("test")
+    @GetMapping("/test")
     public ResponseEntity<ApiResponse<String>> publicTest() {
         return ResponseEntity.ok(
                 new ApiResponse<>("Test endpoint working", "Test", HttpStatus.OK.value())
         );
     }
 
-    @GetMapping("test/protected")
+    @GetMapping("/test/protected")
     public ResponseEntity<ApiResponse<Map<String, String>>> protectedTest() {
         Map<String, String> data = Map.of(
                 "message", "JWT authentication successful"

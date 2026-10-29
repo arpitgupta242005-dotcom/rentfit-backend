@@ -5,7 +5,6 @@ import com.rentfit.filter.JwtAuthenticationFilter;
 import com.rentfit.security.CustomUserDetailService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -49,8 +48,14 @@ public class SecurityConfig {
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/test").permitAll()
-                        .requestMatchers( "/api/auth/**").permitAll()
+                        // Public endpoints
+                        .requestMatchers("/api/v1/test").permitAll()
+                        .requestMatchers("/api/auth/**").permitAll()
+                        // Admin-only endpoints
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        // User endpoints (USER or ADMIN)
+                        .requestMatchers("/api/user/**").hasAnyRole("USER", "ADMIN")
+                        // All other endpoints require authentication
                         .anyRequest().authenticated())
                 .httpBasic(basic -> basic.disable())
                 .formLogin(form -> form.disable())
