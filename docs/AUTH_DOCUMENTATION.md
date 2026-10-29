@@ -1,56 +1,199 @@
-# RentFit Authentication Module
+# Authentication API Documentation
 
 ## Overview
-The Authentication module manages email OTP verification, user registration, login, and JWT-based access to protected APIs.
-
-## Technology Stack
-- Java and Spring Boot
-- Spring Security
-- PostgreSQL
-- JWT for stateless authentication
-- Email delivery through Gmail SMTP
-- Postman for API testing
+JWT-based authentication with email OTP verification. All endpoints return standardized `ApiResponse` wrapper.
 
 ## Authentication Flow
-1. **Send OTP:** The client requests an OTP for email verification.
-2. **Verify OTP:** The client submits the received OTP for verification.
-3. **Register:** The user submits registration details after email verification.
-4. **Login:** The user submits login credentials and receives a JWT after successful authentication.
-5. **Access protected APIs:** The client sends the token in the `Authorization` header as `Bearer <JWT>`.
+1. Send OTP to email
+2. Verify OTP
+3. Register user (requires verified email)
+4. Login to get JWT token
+5. Use JWT in `Authorization: Bearer <token>` header for protected endpoints
 
 ## API Endpoints
-The following endpoint paths are based on the current development/testing flow. Confirm the exact mappings and request fields against `AuthController` before treating this table as final.
 
-| Operation | HTTP method | Endpoint |
-|---|---|---|
-| Send OTP | POST | `/api/auth/send-otp` |
-| Verify OTP | POST | `/api/auth/verify-otp` |
-| Register | POST | `/api/auth/register` |
-| Login | POST | `/api/auth/login` |
+### 1. Send OTP
+**POST** `/api/auth/send-otp`
 
-Request fields and response bodies depend on the corresponding DTOs and controller implementation. Use the actual DTO fields when making requests in Postman.
-
-## JWT Security
-- The application uses Spring Security with stateless sessions.
-- Authentication endpoints under `/api/auth/**` are permitted without an existing JWT.
-- Other endpoints require authentication.
-- Include the token in requests to protected endpoints:
-
-```http
-Authorization: Bearer <JWT>
+**Request:**
+```json
+{
+  "email": "user@example.com"
+}
 ```
 
-## Testing Summary
-Basic tests performed during development:
-- OTP send and verification: successful.
-- Registration: successful; duplicate registration returned `409 Conflict`; registration with an unverified email returned `400 Bad Request`.
-- Login: successful and returned a JWT.
-- Protected API `GET /api/test/protected`:
-  - Valid JWT: `200 OK`
-  - Missing or invalid JWT: `403 Forbidden`
+**Response (200 OK):**
+```json
+{
+  "message": "OTP sent successfully",
+  "data": null,
+  "status": 200
+}
+```
 
-## Configuration and Secrets
-Configure database, mail, and JWT settings through environment-specific configuration. Do not commit `.env`, database passwords, Gmail App Passwords, JWT secrets, or real OTPs to GitHub.
+---
 
-## Notes
-This document summarizes the current development implementation and basic manual tests. Before release, verify endpoint mappings, DTO fields, response examples, and status codes against the source code and add automated tests as appropriate.
+### 2. Verify OTP
+**POST** `/api/auth/verify-otp`
+
+**Request:**
+```json
+{
+  "email": "user@example.com",
+  "otp": "123456"
+}
+```
+
+**Response (200 OK):**
+```json
+{
+  "message": "OTP verified successfully",
+  "data": null,
+  "status": 200
+}
+```
+
+**Response (400 Bad Request - Invalid OTP):**
+```json
+{
+  "message": "Invalid or expired OTP",
+  "data": null,
+  "status": 400
+}
+```
+
+---
+
+### 3. Register
+**POST** `/api/auth/register`
+
+**Request:**
+```json
+{
+  "name": "John Doe",
+  "email": "user@example.com",
+  "password": "password123"
+}
+```
+
+**Response (201 Created):**
+```json
+{
+  "message": "User registered successfully.",
+  "data": {
+    "message": "Registration successful",
+    "id": 1,
+    "email": "user@example.com"
+  },
+  "status": 201
+}
+```
+
+**Response (400 Bad Request - Email not verified):**
+```json
+{
+  "message": "Please verify your email using OTP first",
+  "data": null,
+  "status": 400
+}
+```
+
+**Response (409 Conflict - Email exists):**
+```json
+{
+  "message": "user with email user@example.com already exists",
+  "data": null,
+  "status": 409
+}
+```
+
+---
+
+### 4. Login
+**POST** `/api/auth/login`
+
+**Request:**
+```json
+{
+  "email": "user@example.com",
+  "password": "password123"
+}
+```
+
+**Response (200 OK):**
+```json
+{
+  "message": "Login successful",
+  "data": {
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "id": 1,
+    "name": "John Doe",
+    "email": "user@example.com",
+    "role": "USER"
+  },
+  "status": 200
+}
+```
+
+**Response (401 Unauthorized - Invalid credentials):**
+```json
+{
+  "message": "Invalid login credentials",
+  "data": null,
+  "status": 401
+}
+```
+
+---
+
+## Authorization
+
+### Role-Based Access Control
+- **USER**: Can access `/api/user/**` endpoints
+- **ADMIN**: Can access `/api/admin/**` and `/api/user/**` endpoints
+
+### Protected Endpoints
+Include JWT token in Authorization header:
+```http
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+**Example Request:**
+```http
+GET /api/user/profile
+Authorization: Bearer <JWT_TOKEN>
+```
+
+**Response (401 Unauthorized - Missing/Invalid Token):**
+```json
+{
+  "message": "Authentication failed",
+  "data": null,
+  "status": 401
+}
+```
+
+---
+
+## Response Format
+All endpoints return standardized `ApiResponse`:
+
+```json
+{
+  "message": "Descriptive message",
+  "data": <response data or null>,
+  "status": <HTTP status code>
+}
+```
+
+Error responses use `ApiErrorResponse` with additional error details when applicable.
+
+---
+
+## Security Notes
+- JWT expires in 1 hour (configurable)
+- OTP expires in 5 minutes
+- Email verification expires in 10 minutes
+- All auth endpoints are public
+- All other endpoints require valid JWT
+- User account status must be ACTIVE for authentication
