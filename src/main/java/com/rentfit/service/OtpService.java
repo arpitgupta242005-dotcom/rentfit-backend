@@ -6,6 +6,7 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
+import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -30,21 +31,20 @@ public class OtpService {
     }
 
     public void sendOtp(String email) {
-        String emailKey = normalizeEmail(email);
 
         // A new OTP requires fresh verification.
-        verifiedEmails.remove(emailKey);
+        verifiedEmails.remove(email);
 
         String otp = String.format(
                 "%06d", secureRandom.nextInt(1_000_000)
         );
 
-        otpStore.put(emailKey, new OtpData(
+        otpStore.put(email, new OtpData(
                 otp, System.currentTimeMillis() + OTP_EXPIRY_MS
         ));
 
         SimpleMailMessage message = new SimpleMailMessage();
-        message.setTo(emailKey);
+        message.setTo(email);
         message.setSubject("Rentfit Email Verification");
         message.setText(
                 "Your Rentfit verification OTP is: " + otp
@@ -54,7 +54,7 @@ public class OtpService {
         try {
             mailSender.send(message);
         } catch (RuntimeException ex) {
-            otpStore.remove(emailKey);
+            otpStore.remove(email);
             throw new IllegalStateException(
                     "Unable to send OTP email", ex
             );
@@ -94,7 +94,7 @@ public class OtpService {
     }
 
     private String normalizeEmail(String email) {
-        return email.trim().toLowerCase(java.util.Locale.ROOT);
+        return email.trim().toLowerCase(Locale.ROOT);
     }
 
     private static class OtpData {
