@@ -1,4 +1,4 @@
 package com.rentfit.entity;
 
-public class message {
+public class Message {
 }
