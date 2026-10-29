@@ -51,11 +51,6 @@ public class SecurityConfig {
                         // Public endpoints
                         .requestMatchers("/api/v1/test").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
-                        // Admin-only endpoints
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                        // User endpoints (USER or ADMIN)
-                        .requestMatchers("/api/user/**").hasAnyRole("USER", "ADMIN")
-                        // All other endpoints require authentication
                         .anyRequest().authenticated())
                 .httpBasic(basic -> basic.disable())
                 .formLogin(form -> form.disable())
